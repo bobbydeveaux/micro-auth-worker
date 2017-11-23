@@ -10,10 +10,11 @@ import (
 const passphrase string = "fbac-FJfxeMQCzXBPqrIY8Hhk"
 
 type person struct {
-	Id    int64
-	Name  string
-	Valid bool
-	Jwt   string
+	Id          int64
+	Name        string
+	Valid       bool
+	Jwt         string
+	AccessToken string
 }
 
 type accessToken struct {

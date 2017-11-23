@@ -1,13 +1,15 @@
 package main
 
 import (
+	"github.com/dvsekhvalnov/jose2go"
 	"github.com/nats-io/go-nats"
 	"log"
 	"os"
 )
 
 // need to get this from ENV, because GitHub public project will expose this. Oops.
-const passphrase string = "fbac-FJfxeMQCzXBPqrIY8Hhk"
+const jwtPassphrase string = "fbac-FJfxeMQCzXBPqrIY8Hhk"
+const atPassphrase string = "fbac-VviNJvCUqDK1v9BtMUop"
 
 type person struct {
 	Id          int64
@@ -29,9 +31,18 @@ func main() {
 
 	var at accessToken
 	ec.QueueSubscribe("auth.generateaccesstoken", "job_workers", func(msg *nats.Msg) {
-		log.Printf("Authenticating: %s\n", msg.Data)
+		log.Printf("Generating Access Token: %s\n", msg.Data)
 
-		at.Value = "FBAC-123456"
+		payload := msg.Data
+		strPayload := string(payload[:])
+		log.Printf("payload is %v, ", strPayload)
+
+		secureToken, err := jose.Encrypt(strPayload, jose.PBES2_HS256_A128KW, jose.A256GCM, atPassphrase)
+		if err != nil {
+			log.Println("error:", err)
+		}
+
+		at.Value = secureToken
 		ec.Publish(msg.Reply, at)
 	})
 

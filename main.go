@@ -23,6 +23,10 @@ type accessToken struct {
 	Value string
 }
 
+type jwtToken struct {
+	Value string
+}
+
 func main() {
 	//NATS_HOST = nats://localhost:4222
 	nc, _ := nats.Connect(os.Getenv("NATS_HOST"))
@@ -44,6 +48,29 @@ func main() {
 
 		at.Value = "FBAC." + secureToken
 		ec.Publish(msg.Reply, at)
+	})
+
+	var jwt jwtToken
+	ec.QueueSubscribe("auth.jwt", "job_workers", func(msg *nats.Msg) {
+		log.Printf("Generating JWT: %s\n", msg.Data)
+
+		// decode access token
+		// validate access token
+		// validate user
+		// validate user acccess
+		// generate JWT
+
+		payload := msg.Data
+		strPayload := string(payload[:])
+		log.Printf("payload is %v, ", strPayload)
+
+		secureToken, err := jose.Encrypt(strPayload, jose.PBES2_HS256_A128KW, jose.A256GCM, jwtPassphrase)
+		if err != nil {
+			log.Println("error:", err)
+		}
+
+		jwt.Value = secureToken
+		ec.Publish(msg.Reply, jwt)
 	})
 
 	select {}

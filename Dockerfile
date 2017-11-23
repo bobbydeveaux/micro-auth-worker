@@ -1,3 +1,3 @@
 FROM golang:1.8
-COPY       micro-user-worker /bin/micro-user-worker
+COPY       micro-auth-worker /bin/micro-auth-worker
 ENTRYPOINT ["/bin/micro-user-worker"]

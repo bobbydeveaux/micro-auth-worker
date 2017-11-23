@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/dvsekhvalnov/jose2go"
 	"github.com/nats-io/go-nats"
 	"log"
 	"os"
+	"time"
 )
 
 // need to get this from ENV, because GitHub public project will expose this. Oops.
@@ -24,9 +26,13 @@ type accessToken struct {
 	Expiry int
 }
 
-type jwtToken struct {
-	Value  string
+type jwtAuth struct {
+	User   person
 	Expiry int
+}
+
+type jwtToken struct {
+	Value string
 }
 
 func main() {
@@ -52,7 +58,9 @@ func main() {
 		ec.Publish(msg.Reply, at)
 	})
 
+	var authJwt jwtAuth
 	var jwt jwtToken
+	var p person
 	ec.QueueSubscribe("auth.jwt", "job_workers", func(msg *nats.Msg) {
 		log.Printf("Generating JWT: %s\n", msg.Data)
 
@@ -62,7 +70,18 @@ func main() {
 		// validate user acccess
 		// generate JWT
 
-		payload := msg.Data
+		err := json.Unmarshal(msg.Data, &p)
+		if err != nil {
+			log.Println(err.Error())
+		}
+
+		authJwt.User = p
+		authJwt.Expiry = int(time.Now().Unix()) + int(time.Second*600)
+
+		payload, err := json.Marshal(authJwt)
+		if err != nil {
+			log.Println("error:", err)
+		}
 		strPayload := string(payload[:])
 		log.Printf("payload is %v, ", strPayload)
 

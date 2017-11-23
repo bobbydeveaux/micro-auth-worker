@@ -42,7 +42,7 @@ func main() {
 			log.Println("error:", err)
 		}
 
-		at.Value = secureToken
+		at.Value = "FBAC." + secureToken
 		ec.Publish(msg.Reply, at)
 	})
 
